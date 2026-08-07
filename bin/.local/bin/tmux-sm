@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+
+IDLE_THRESHOLD=1200  # 20 minutes in seconds
+IDLE_PREFIX="[idle]"
+PIN_PREFIX="[pin]"
+TMUX_BIN="$(command -v tmux)"
+
+# ── helpers ────────────────────────────────────────────────────────────────────
+
+is_pinned() {
+    [[ "$1" == \[pin\]* ]]
+}
+
+is_idle() {
+    [[ "$1" == \[idle\]* ]]
+}
+
+bare_name() {
+    local n="$1"
+    n="${n#\[pin\]}"
+    n="${n#\[idle\]}"
+    echo "$n"
+}
+
+format_row() {
+    local name="$1" activity="$2" attached="$3"
+    local now age age_str tags
+    now=$(date +%s)
+    age=$((now - activity))
+
+    if (( age < 60 )); then
+        age_str="${age}s ago"
+    elif (( age < 3600 )); then
+        age_str="$((age/60))m ago"
+    else
+        age_str="$((age/3600))h ago"
+    fi
+
+    tags=""
+    (( attached > 0 )) && tags="${tags}[attached]"
+
+    printf "%-40s  %-12s  %s\n" "$name" "$age_str" "$tags"
+}
+
+# ── commands ───────────────────────────────────────────────────────────────────
+
+cmd_mark_idle() {
+    $TMUX_BIN list-sessions -F "#{session_name} #{session_activity}" 2>/dev/null | \
+    while read -r name activity; do
+        is_pinned "$name" && continue
+        is_idle "$name"   && continue
+
+        now=$(date +%s)
+        age=$((now - activity))
+
+        if (( age > IDLE_THRESHOLD )); then
+            new_name="${IDLE_PREFIX}${name}"
+            $TMUX_BIN rename-session -t "$name" "$new_name" 2>/dev/null \
+                && echo "marked idle: $name -> $new_name"
+        fi
+    done
+}
+
+cmd_unmark_idle() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        echo "usage: tmux-sm unmark <session-name>"
+        exit 1
+    fi
+    if ! is_idle "$name"; then
+        echo "session '$name' is not marked idle"
+        exit 1
+    fi
+    local new_name
+    new_name="$(bare_name "$name")"
+    $TMUX_BIN rename-session -t "$name" "$new_name" \
+        && echo "unmarked: $name -> $new_name"
+}
+
+cmd_pin() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        echo "usage: tmux-sm pin <session-name>"
+        exit 1
+    fi
+    if is_pinned "$name"; then
+        echo "session '$name' is already pinned"
+        exit 1
+    fi
+    local new_name
+    new_name="${PIN_PREFIX}$(bare_name "$name")"
+    $TMUX_BIN rename-session -t "$name" "$new_name" \
+        && echo "pinned: $name -> $new_name"
+}
+
+cmd_unpin() {
+    local name="$1"
+    if [[ -z "$name" ]]; then
+        echo "usage: tmux-sm unpin <session-name>"
+        exit 1
+    fi
+    if ! is_pinned "$name"; then
+        echo "session '$name' is not pinned"
+        exit 1
+    fi
+    local new_name
+    new_name="$(bare_name "$name")"
+    $TMUX_BIN rename-session -t "$name" "$new_name" \
+        && echo "unpinned: $name -> $new_name"
+}
+
+cmd_list() {
+    local show_all=false
+    [[ "$1" == "--all" ]] && show_all=true
+
+    local sessions
+    sessions=$($TMUX_BIN list-sessions -F "#{session_name} #{session_activity} #{session_attached}" 2>/dev/null)
+
+    # three passes: pinned, active, idle
+    while read -r name activity attached; do
+        is_pinned "$name" || continue
+        format_row "$name" "$activity" "$attached"
+    done <<< "$(echo "$sessions" | sort)"
+
+    while read -r name activity attached; do
+        is_pinned "$name" && continue
+        is_idle "$name"   && continue
+        format_row "$name" "$activity" "$attached"
+    done <<< "$(echo "$sessions" | sort)"
+
+    $show_all || return
+    while read -r name activity attached; do
+        is_idle "$name" || continue
+        format_row "$name" "$activity" "$attached"
+    done <<< "$(echo "$sessions" | sort)"
+}
+
+cmd_manual_idle() {
+    local name="$1"
+    is_pinned "$name" && echo "session is pinned, unpin first" && exit 1
+    is_idle "$name"   && echo "session is already idle" && exit 1
+    local new_name="${IDLE_PREFIX}${name}"
+    $TMUX_BIN rename-session -t "$name" "$new_name" \
+        && echo "marked idle: $name -> $new_name"
+}
+
+cmd_help() {
+    cat <<HELP
+tmux-sm -- tmux session manager
+
+commands:
+  mark_idle        scan and mark inactive sessions (>20min) with [idle] prefix
+  unmark <n>       remove [idle] from a session
+  pin <n>          pin a session so it is never marked idle
+  unpin <n>        remove [pin] from a session
+  list             list pinned + active sessions (hides idle)
+  list --all       list all sessions: pinned -> active -> idle
+  help             show this message
+
+tags:
+  [idle]<n>        session inactive for >20min (auto-tagged)
+  [pin]<n>         session pinned, never auto-tagged as idle
+
+examples:
+  tmux-sm pin freya
+  tmux-sm list --all
+  tmux-sm unmark [idle]tinyaya
+
+tmux.conf bindings:
+  bind P run-shell "\$HOME/.local/bin/tmux-sm pin '#{session_name}'"
+  bind X run-shell "\$HOME/.local/bin/tmux-sm unpin '#{session_name}'"
+  bind I run-shell "\$HOME/.local/bin/tmux-sm unmark '#{session_name}'"
+HELP
+}
+
+# ── dispatcher ─────────────────────────────────────────────────────────────────
+
+case "$1" in
+    mark_idle)      cmd_mark_idle ;;
+    unmark)         cmd_unmark_idle "$2" ;;
+    pin)            cmd_pin "$2" ;;
+    unpin)          cmd_unpin "$2" ;;
+    list)           cmd_list "$2" ;;
+    manual-idle)    cmd_manual_idle "$2" ;;
+    help|--help|-h) cmd_help ;;
+    *)              cmd_help ;;
+esac

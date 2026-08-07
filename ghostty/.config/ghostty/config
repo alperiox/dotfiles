@@ -1,0 +1,24 @@
+font-family = Berkeley Mono Trial
+theme = rose-pine-moon
+background-opacity = 0.90
+
+keybind = shift+enter=text:\x1b\r
+
+# custom shader
+custom-shader = shaders/cursor-smear.glsl
+
+
+# Force proper dimension handling
+adjust-cell-width = 0
+adjust-cell-height = 0
+adjust-font-baseline = 0
+
+# Make sure font rendering is correct for HiDPI
+font-size = 13
+
+# Add to ghostty config
+window-inherit-working-directory = true
+window-inherit-font-size = true
+
+# Try different DPI settings
+macos-non-native-fullscreen = false

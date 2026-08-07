@@ -1,0 +1,23 @@
+# Secrets — NEVER commit API keys
+secrets/.secrets.zsh
+.secrets.zsh
+
+# macOS
+.DS_Store
+._*
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Neovim generated
+nvim/.config/nvim/lazy-lock.json
+nvim/.config/nvim/plugin/
+
+# Shell history & caches
+.zsh_history
+.bash_history
+.zcompdump*

@@ -1,0 +1,100 @@
+tap "deskflow/tap", trusted: true
+tap "teamookla/speedtest"
+
+# ── Core CLI tools ─────────────────────────────────────────────────────────────
+brew "neovim"
+brew "tmux"
+brew "ripgrep"
+brew "fd"
+brew "fzf"
+brew "zoxide"
+brew "jq"
+brew "tree"
+brew "tlrc"
+brew "wget"
+brew "stow"
+brew "zsh-vi-mode"
+
+# ── Development ────────────────────────────────────────────────────────────────
+brew "git-lfs"
+brew "gh"
+brew "cmake"
+brew "just"
+brew "python@3.13"
+brew "python@3.10"
+brew "pipx"
+brew "pnpm"
+
+# ── Media & conversion ────────────────────────────────────────────────────────
+brew "ffmpeg"
+brew "imagemagick"
+brew "pandoc"
+brew "sox"
+brew "espeak-ng"
+brew "portaudio"
+
+# ── Networking & cloud ─────────────────────────────────────────────────────────
+brew "awscli"
+brew "cloudflared"
+brew "grpcurl"
+brew "nmap"
+brew "sshpass"
+brew "telnet"
+brew "websocat"
+
+# ── System utilities ──────────────────────────────────────────────────────────
+brew "duf"
+brew "ncdu"
+brew "mac-cleanup-go"
+brew "sevenzip"
+brew "unar"
+brew "xz"
+
+# ── Language runtimes & tools ──────────────────────────────────────────────────
+brew "openssl@3"
+brew "pkgconf"
+brew "gobject-introspection"
+brew "pango"
+brew "librsvg"
+brew "resvg"
+brew "poppler"
+brew "libb2"
+brew "libpsl"
+brew "mono"
+brew "mpich"
+
+# ── Other tools ────────────────────────────────────────────────────────────────
+brew "mpv"
+brew "redis"
+brew "sqlcipher"
+brew "xterm"
+brew "tuxedo"
+brew "yazi"
+brew "yt-dlp"
+brew "mingw-w64"
+brew "winetricks"
+brew "innoextract"
+brew "sngrep"
+brew "mole"
+
+# ── Casks (GUI apps) ──────────────────────────────────────────────────────────
+cask "alt-tab"
+cask "betterdisplay"
+cask "bitwarden"
+cask "claude-code"
+cask "deskflow/tap/deskflow"
+cask "docker-desktop"
+cask "espanso"
+cask "font-symbols-only-nerd-font"
+cask "gstreamer-runtime"
+cask "hammerspoon"
+cask "macfuse"
+cask "ngrok"
+cask "one-switch"
+cask "rio"
+cask "shortcat"
+cask "stats"
+
+# ── Global npm packages ───────────────────────────────────────────────────────
+npm "corepack"
+npm "pyright"
