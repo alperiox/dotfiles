@@ -131,6 +131,14 @@ install_linux() {
         info "zoxide already installed."
     fi
 
+    # superfile (terminal file manager)
+    if ! command -v spf &>/dev/null; then
+        info "Installing superfile..."
+        bash -c "$(curl -sLo- https://superfile.netlify.app/install.sh)"
+    else
+        info "superfile already installed."
+    fi
+
     # Set zsh as default shell
     if [[ "$SHELL" != *"zsh"* ]]; then
         info "Setting zsh as default shell..."

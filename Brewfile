@@ -14,6 +14,7 @@ brew "tlrc"
 brew "wget"
 brew "stow"
 brew "zsh-vi-mode"
+brew "superfile"
 
 # ── Development ────────────────────────────────────────────────────────────────
 brew "git-lfs"
