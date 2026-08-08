@@ -156,13 +156,19 @@ info "Stowing dotfiles..."
 for pkg in "${STOW_PACKAGES[@]}"; do
     if [ -d "$DOTFILES_DIR/$pkg" ]; then
         info "  Stowing $pkg..."
-        stow -v -d "$DOTFILES_DIR" -t "$HOME" "$pkg" 2>&1 | while read -r line; do
+        # --adopt: moves existing files into the package dir and creates symlinks
+        # This handles the case where config files already exist (e.g. Ubuntu's default .bashrc)
+        stow --adopt -v -d "$DOTFILES_DIR" -t "$HOME" "$pkg" 2>&1 | while read -r line; do
             echo "    $line"
         done
     else
         warn "  Package '$pkg' not found, skipping."
     fi
 done
+
+# Restore repo versions after --adopt (adopt overwrites repo files with existing ones)
+info "Restoring dotfiles to repo versions..."
+git -C "$DOTFILES_DIR" checkout -- .
 
 # ── 3. Set up secrets file ────────────────────────────────────────────────────
 if [ ! -f "$HOME/.secrets.zsh" ]; then
