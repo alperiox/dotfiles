@@ -139,6 +139,26 @@ install_linux() {
         info "superfile already installed."
     fi
 
+    # tuxedo (terminal todo.txt UI)
+    if ! command -v tuxedo &>/dev/null; then
+        info "Installing tuxedo..."
+        TUXEDO_ARCH="$(uname -m)"
+        TUXEDO_URL="$(curl -s https://api.github.com/repos/webstonehq/tuxedo/releases/latest \
+            | jq -r ".assets[] | select(.name | test(\"${TUXEDO_ARCH}.*linux.*\\.tar\\.gz$\")) | .browser_download_url")"
+        if [ -n "$TUXEDO_URL" ]; then
+            TMPDIR=$(mktemp -d)
+            curl -fsSL -o "$TMPDIR/tuxedo.tar.gz" "$TUXEDO_URL"
+            tar -xzf "$TMPDIR/tuxedo.tar.gz" -C "$TMPDIR"
+            install -m 755 "$TMPDIR/tuxedo" "$HOME/.local/bin/tuxedo"
+            rm -rf "$TMPDIR"
+            info "tuxedo installed to ~/.local/bin/"
+        else
+            warn "Could not find tuxedo release for $TUXEDO_ARCH. Install manually."
+        fi
+    else
+        info "tuxedo already installed."
+    fi
+
     # Set zsh as default shell
     if [[ "$SHELL" != *"zsh"* ]]; then
         info "Setting zsh as default shell..."
@@ -250,7 +270,21 @@ if [ -f "$HOME/.gitignore_global" ]; then
     info "Global gitignore configured."
 fi
 
-# ── 12. Install Nerd Font (Linux only — macOS uses brew cask) ─────────────────
+# ── 12. Install Python CLI tools via pipx ─────────────────────────────────────
+if command -v pipx &>/dev/null; then
+    for tool in termdown; do
+        if ! pipx list --short 2>/dev/null | grep -q "^${tool} "; then
+            info "Installing $tool via pipx..."
+            pipx install "$tool"
+        else
+            info "$tool already installed."
+        fi
+    done
+else
+    warn "pipx not found — skipping Python CLI tools (termdown). Install pipx first."
+fi
+
+# ── 13. Install Nerd Font (Linux only — macOS uses brew cask) ─────────────────
 if [[ "$OS" == "linux" ]]; then
     FONT_DIR="$HOME/.local/share/fonts"
     if [ ! -f "$FONT_DIR/SymbolsNerdFontMono-Regular.ttf" ]; then
