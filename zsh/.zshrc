@@ -11,11 +11,12 @@ alias grepssh=~/grepssh.sh
 
 # Check that the function `starship_zle-keymap-select()` is defined.
 # xref: https://github.com/starship/starship/issues/3418
-type starship_zle-keymap-select >/dev/null || \
-  {
-    echo "Load starship"
-    eval "$(/usr/local/bin/starship init zsh)"
-  }
+if command -v starship &>/dev/null; then
+    type starship_zle-keymap-select >/dev/null || \
+      {
+        eval "$(starship init zsh)"
+      }
+fi
 
 # zsh-vi-mode: brew on macOS, manual clone on Linux
 if command -v brew &>/dev/null; then
@@ -50,7 +51,7 @@ export PATH="$HOME/.local/bin:$PATH"
 # Which plugins would you like to load?
 plugins=(git)
 
-source $ZSH/oh-my-zsh.sh
+[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -95,7 +96,7 @@ esac
 #
 #
 # starship
-eval "$(starship init zsh)"
+command -v starship &>/dev/null && eval "$(starship init zsh)"
 export PATH="$HOME/.local/bin:$PATH"
 
 ### Added by Zinit's installer
@@ -107,17 +108,17 @@ if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
         print -P "%F{160} The clone has failed.%f%b"
 fi
 
-source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
-autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
+if [[ -f "$HOME/.local/share/zinit/zinit.git/zinit.zsh" ]]; then
+    source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+    autoload -Uz _zinit
+    (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# Load a few important annexes, without Turbo
-# (this is currently required for annexes)
-zinit light-mode for \
-    zdharma-continuum/zinit-annex-as-monitor \
-    zdharma-continuum/zinit-annex-bin-gem-node \
-    zdharma-continuum/zinit-annex-patch-dl \
-    zdharma-continuum/zinit-annex-rust
+    zinit light-mode for \
+        zdharma-continuum/zinit-annex-as-monitor \
+        zdharma-continuum/zinit-annex-bin-gem-node \
+        zdharma-continuum/zinit-annex-patch-dl \
+        zdharma-continuum/zinit-annex-rust
+fi
 
 ### End of Zinit's installer chunk
 
@@ -130,8 +131,8 @@ fi
 trap 'eval $(resize 2>/dev/null)' WINCH
 
 
-# install zoxide
-eval "$(zoxide init zsh --cmd j)"
+# zoxide
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh --cmd j)"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
@@ -139,5 +140,7 @@ export PATH="$HOME/.opencode/bin:$PATH"
 clear
 
 # llama.cpp
-export LLAMA_CPP_PATH="$HOME/Desktop/coding/llama.cpp/build/bin"
-export PATH="$LLAMA_CPP_PATH:$PATH"
+if [ -d "$HOME/Desktop/coding/llama.cpp/build/bin" ]; then
+    export LLAMA_CPP_PATH="$HOME/Desktop/coding/llama.cpp/build/bin"
+    export PATH="$LLAMA_CPP_PATH:$PATH"
+fi
